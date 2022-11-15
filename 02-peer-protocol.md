@@ -1142,7 +1142,8 @@ A node:
     - MUST NOT send an `update_fulfill_htlc`, `update_fail_htlc`, or
 `update_fail_malformed_htlc`.
   - When failing an incoming HTLC:
-    - If `current_blinding_point` is set in the onion payload:
+    - If `current_blinding_point` is set in the onion payload and it is not the
+      final node:
       - MUST send an `update_fail_htlc` error using the
         `invalid_onion_blinding` failure code with the `sha256_of_onion`
         of the onion it received, for any local or downstream errors.

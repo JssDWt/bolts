@@ -1037,10 +1037,6 @@ The _erring node_:
   - SHOULD set `pad` such that the `failure_len` plus `pad_len` is equal to 256.
     - Note: this value is 118 bytes longer than the longest currently-defined
     message.
-  - If `blinding_point` is set in the incoming `update_add_htlc` or
-    `current_blinding_point` is set in the onion payload:
-    - MUST return `invalid_onion_blinding` for any local error or other
-      downstream errors.
 
 The _origin node_:
   - once the return message has been decrypted:
@@ -1251,12 +1247,18 @@ The onion sent to a blinded path didn't match the recipient's encrypted relay re
 ### Requirements
 
 An _erring node_:
-  - MUST select one of the above error codes when creating an error message.
-  - MUST include the appropriate data for that particular error type.
-  - if there is more than one error:
-    - SHOULD select the first error it encounters from the list above.
+  - if `blinding_point` is set in the incoming `update_add_htlc`:
+    - MUST return an `invalid_onion_blinding` error.
+  - if `current_blinding_point` is set in the onion payload and it is not the
+    final node:
+    - MUST return an `invalid_onion_blinding` error.
+  - otherwise:
+    - MUST select one of the above error codes when creating an error message.
+    - MUST include the appropriate data for that particular error type.
+    - if there is more than one error:
+      - SHOULD select the first error it encounters from the list above.
 
-Any _erring node_ MAY:
+An _erring node_ MAY:
   - if the `realm` byte is unknown:
     - return an `invalid_realm` error.
   - if the per-hop payload in the onion is invalid (e.g. it is not a valid tlv stream)
@@ -1269,6 +1271,15 @@ Any _erring node_ MAY:
   - if a node has requirements advertised in its `node_announcement` `features`,
   which were NOT included in the onion:
     - return a `required_node_feature_missing` error.
+
+A _forwarding node_ MUST:
+  - if `blinding_point` is set in the incoming `update_add_htlc`:
+    - return an `invalid_onion_blinding` error.
+  - if `current_blinding_point` is set in the onion payload and it is not the
+    final node:
+    - return an `invalid_onion_blinding` error.
+  - otherwise:
+    - select one of the above error codes when creating an error message.
 
 A _forwarding node_ MAY, but a _final node_ MUST NOT:
   - if the onion `version` byte is unknown:
